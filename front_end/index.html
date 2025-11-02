@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Room Designer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #000;
+        }
+        /* Right column - 3D window */
+        #app-container {
+            position: fixed;
+            top: 60px;
+            left: 430px;
+            right: 20px;
+            bottom: 20px;
+            border: 2px solid #4CAF50;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #000;
+            z-index: 100;
+        }
+        #app-container.hidden {
+            display: none;
+        }
+        #chat-container {
+            flex: 1;
+            display: none;
+            flex-direction: column;
+            background: #000;
+            height: 100%;
+            overflow: hidden;
+        }
+        #chat-container.active {
+            display: flex;
+        }
+        #upload-page {
+            flex: 1;
+            display: none;
+            background: #000;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        #upload-page.active {
+            display: block;
+        }
+        #technology-page {
+            flex: 1;
+            display: none;
+            background: #000;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        #technology-page.active {
+            display: block;
+        }
+        #profile-page {
+            flex: 1;
+            display: none;
+            background: #000;
+            padding: 0;
+            overflow-y: auto;
+        }
+        #profile-page.active {
+            display: block;
+        }
+        #upload-page h2,
+        #technology-page h2 {
+            color: #fff;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        #upload-page-content,
+        #technology-page-content {
+            color: #fff;
+        }
+        .chat-header {
+            padding: 20px 20px 0 20px;
+            background: transparent;
+        }
+        .chat-header h3 {
+            margin: 0 0 20px 0;
+            font-size: 24px;
+            color: #fff;
+            font-weight: 600;
+        }
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-height: 0;
+        }
+        .chat-message {
+            display: flex;
+            margin-bottom: 8px;
+        }
+        .chat-message-user {
+            justify-content: flex-end;
+        }
+        .chat-message-assistant {
+            justify-content: flex-start;
+        }
+        .chat-message-content {
+            max-width: 75%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            word-wrap: break-word;
+            line-height: 1.4;
+            font-size: 14px;
+        }
+        .chat-message-user .chat-message-content {
+            background: #1a1a1a;
+            color: #fff;
+            border: 1px solid #333;
+            border-bottom-right-radius: 4px;
+        }
+        .chat-message-assistant .chat-message-content {
+            background: #1a1a1a;
+            color: #fff;
+            border: 1px solid #333;
+            border-bottom-left-radius: 4px;
+        }
+        .chat-typing .chat-message-content {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            padding: 12px 16px;
+        }
+        .typing-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #666;
+            margin: 0 2px;
+            animation: typing 1.4s infinite;
+        }
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.7;
+            }
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
+        .chat-input-container {
+            display: flex;
+            padding: 15px;
+            background: #111;
+            border-top: 1px solid #333;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+        .chat-input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid #333;
+            border-radius: 20px;
+            font-size: 14px;
+            outline: none;
+            background: #1a1a1a;
+            color: #fff;
+            transition: border-color 0.2s;
+        }
+        .chat-input::placeholder {
+            color: #666;
+        }
+        .chat-input:focus {
+            border-color: #4CAF50;
+        }
+        .chat-send-btn {
+            padding: 10px 20px;
+            background: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+        .chat-send-btn:hover {
+            background: #45a049;
+        }
+        .chat-send-btn:active {
+            background: #3d8b40;
+        }
+        #top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: #2a2a2a;
+            border-bottom: 1px solid #444;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 200;
+        }
+        #top-bar-title {
+            color: #fff;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        /* Robot dropdown */
+        .robot-dropdown {
+            position: relative;
+        }
+        .robot-dropdown-button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: #1a1a1a;
+            border: 1px solid #444;
+            border-radius: 6px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            min-width: 150px;
+        }
+        .robot-dropdown-button:hover {
+            background: #222;
+            border-color: #4CAF50;
+        }
+        .robot-dropdown-button.active {
+            border-color: #4CAF50;
+            background: #1a1a1a;
+        }
+        .robot-dropdown-button svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+        .robot-dropdown-menu {
+            position: absolute;
+            top: calc(100% + 5px);
+            right: 0;
+            background: #1a1a1a;
+            border: 1px solid #444;
+            border-radius: 6px;
+            min-width: 200px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 1000;
+        }
+        .robot-dropdown-menu.active {
+            display: flex;
+        }
+        .robot-dropdown-item {
+            padding: 12px 16px;
+            color: #fff;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 14px;
+            border: none;
+            background: transparent;
+            text-align: left;
+        }
+        .robot-dropdown-item:hover {
+            background: #2a2a2a;
+        }
+        .robot-dropdown-item:not(:last-child) {
+            border-bottom: 1px solid #333;
+        }
+        .robot-dropdown-item.connect-new {
+            color: #4CAF50;
+            font-weight: 500;
+        }
+        .robot-dropdown-item.connect-new:hover {
+            background: rgba(76, 175, 80, 0.1);
+        }
+        /* Left menu column - icons menu */
+        #left-menu {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            width: 80px;
+            height: calc(100vh - 60px);
+            background: #111;
+            border-right: 1px solid #333;
+            padding: 20px 0;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            justify-content: flex-start;
+        }
+        .menu-icon-item.profile-button {
+            margin-top: auto;
+            margin-bottom: 20px;
+        }
+        .menu-icon-item {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #bbb;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-radius: 8px;
+            background: transparent;
+            position: relative;
+        }
+        .menu-icon-item:hover {
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .menu-icon-item.active {
+            background: #1a1a1a;
+            color: #4CAF50;
+        }
+        .menu-icon-item svg {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+        }
+        
+        /* Middle column - content area */
+        #content-area {
+            position: fixed;
+            top: 60px;
+            left: 80px;
+            width: 350px;
+            height: calc(100vh - 60px);
+            background: #000;
+            border-right: 1px solid #333;
+            z-index: 140;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        #content-area.profile-mode {
+            width: calc(100vw - 80px);
+            border-right: none;
+        }
+        #profile-page {
+            width: 100%;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        /* Deploy confirmation modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-content {
+            background: #1a1a1a;
+            border: 2px solid #4CAF50;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            color: #fff;
+        }
+        .modal-content p {
+            margin: 0 0 25px 0;
+            font-size: 16px;
+            color: #fff;
+            line-height: 1.5;
+            font-weight: 500;
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        .modal-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .modal-btn-cancel {
+            background: #333;
+            color: #fff;
+        }
+        .modal-btn-cancel:hover {
+            background: #444;
+        }
+        .modal-btn-confirm {
+            background: #4CAF50;
+            color: #fff;
+        }
+        .modal-btn-confirm:hover {
+            background: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div id="top-bar">
+        <div id="top-bar-title">Robohome</div>
+        <div class="robot-dropdown">
+            <button class="robot-dropdown-button" id="robot-dropdown-button">
+                <span id="robot-dropdown-text">Select Robot</span>
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M7 10l5 5 5-5z"/>
+                </svg>
+            </button>
+            <div class="robot-dropdown-menu" id="robot-dropdown-menu">
+                <button class="robot-dropdown-item" data-robot="neo-x1">Neo X1</button>
+                <button class="robot-dropdown-item" data-robot="roborock-q7-m5">roborock Q7 M5</button>
+                <button class="robot-dropdown-item connect-new" data-action="connect-new">Connect New</button>
+            </div>
+        </div>
+    </div>
+    <!-- Left column: Icon menu -->
+    <div id="left-menu">
+        <div class="menu-icon-item active" data-page="upload" title="Upload">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
+            </svg>
+        </div>
+        <div class="menu-icon-item" data-page="chat" title="Chat">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
+            </svg>
+        </div>
+        <div class="menu-icon-item" data-page="technology" title="Technology">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 0 0-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm11 15H4v-2h16v2zm0-5H4V8h5.08L7 10.83 8.62 12 11 8.76l1-1.36 1 1.36L15.38 12 17 10.83 14.92 8H20v6z"/>
+            </svg>
+        </div>
+        <div class="menu-icon-item" data-action="deploy" title="Deploy">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 5v14l11-7z"/>
+            </svg>
+        </div>
+        <div class="menu-icon-item profile-button" data-page="profile" title="Profile">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+            </svg>
+        </div>
+    </div>
+    
+    <!-- Middle column: Content area (Chat or Upload) -->
+    <div id="content-area">
+        <div id="chat-container"></div>
+        <div id="upload-page" class="active">
+            <h2>Upload</h2>
+            <div id="upload-page-content"></div>
+        </div>
+        <div id="technology-page">
+            <h2>Technology</h2>
+            <div id="technology-page-content"></div>
+        </div>
+        <div id="profile-page">
+            <div id="profile-page-content"></div>
+        </div>
+    </div>
+    <div id="app-container"></div>
+    
+    <!-- Deploy confirmation modal -->
+    <div id="deploy-modal" class="modal-overlay">
+        <div class="modal-content">
+            <p id="deploy-modal-message">Send your configuration to</p>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" id="deploy-cancel">Cancel</button>
+                <button class="modal-btn modal-btn-confirm" id="deploy-confirm">Yes</button>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

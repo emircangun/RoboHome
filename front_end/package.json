@@ -1,0 +1,27 @@
+{
+  "name": "gaussian-room-app",
+  "version": "1.0.0",
+  "description": "3D Room Designer with PLY file support",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "@types/node": "^24.9.2",
+    "@types/three": "^0.169.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.12"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.68.0",
+    "@zappar/three-gaussian-splat": "^0.1.0",
+    "gsplat": "^1.2.9",
+    "three": "^0.169.0"
+  }
+}
